@@ -1,0 +1,58 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  name      String?
+  createdAt DateTime @default(now())
+  sites     Site[]
+}
+
+model Site {
+  id             String           @id @default(cuid())
+  userId         String?
+  user           User?            @relation(fields: [userId], references: [id])
+  slug           String           @unique
+  domain         String
+  companyName    String
+  companyEmail   String
+  mersisNo       String?
+  dataController String
+  createdAt      DateTime         @default(now())
+  cookieConfig   CookieConfig?
+  output         GeneratedOutput?
+}
+
+model CookieConfig {
+  id             String   @id @default(cuid())
+  siteId         String   @unique
+  site           Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  cookies        Json
+  bannerPosition String   @default("bottom")
+  bannerColor    String   @default("#1e40af")
+  textColor      String   @default("#ffffff")
+  buttonText     String   @default("Kabul Et")
+  rejectText     String   @default("Reddet")
+  detailText     String   @default("Detaylı Bilgi")
+  createdAt      DateTime @default(now())
+}
+
+model GeneratedOutput {
+  id            String   @id @default(cuid())
+  siteId        String   @unique
+  site          Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  bannerScript  String   @db.Text
+  cookiePolicy  String   @db.Text
+  privacyNotice String   @db.Text
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
