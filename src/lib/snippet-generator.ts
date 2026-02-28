@@ -1,5 +1,21 @@
 import type { WizardData } from "@/types"
 
+/** JS string literal içinde güvenli kullanım için escape eder. */
+function esc(str: string): string {
+  return str
+    .replace(/\\/g, "\\\\")
+    .replace(/'/g, "\\'")
+    .replace(/\r/g, "\\r")
+    .replace(/\n/g, "\\n")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029")
+}
+
+/** HTML comment içinde güvenli kullanım için `-->` dizisini kaldırır. */
+function escComment(str: string): string {
+  return str.replace(/-->/g, "-- >")
+}
+
 /**
  * Cookie banner JS snippet üretir.
  * Vanilla JS, bağımlılıksız, ~4KB (minify edilmemiş).
@@ -18,17 +34,28 @@ export function generateSnippet(data: WizardData): string {
   const loaders = generateLoaders(selectedCookies)
   const domain = normalizeDomain(firmaBilgileri.domain)
 
-  return `<!-- Çerezmatik Cookie Banner | ${firmaBilgileri.companyName} | cerezmatik.com -->
+  // Snippet içine gömülen değerleri JS string için escape et
+  const safeCompanyName = esc(firmaBilgileri.companyName)
+  const safePolicyUrl = esc(policyUrl)
+  const safeDomain = esc(domain)
+  const safePrimaryColor = esc(bannerTasarimi.primaryColor)
+  const safeTextColor = esc(bannerTasarimi.textColor)
+  const safePosition = esc(bannerTasarimi.position)
+  const safeButtonText = esc(bannerTasarimi.buttonText)
+  const safeRejectText = esc(bannerTasarimi.rejectText)
+  const safeDetailText = esc(bannerTasarimi.detailText)
+
+  return `<!-- Çerezmatik Cookie Banner | ${escComment(firmaBilgileri.companyName)} | cerezmatik.com -->
 <script>
 (function() {
   'use strict';
 
   var CONSENT_KEY = 'cerezmatik_v1';
   var BANNER_ID   = 'cerezmatik-banner';
-  var PRIMARY     = '${bannerTasarimi.primaryColor}';
-  var TEXT_COLOR  = '${bannerTasarimi.textColor}';
-  var POSITION    = '${bannerTasarimi.position}';
-  var DETAIL_URL  = '${policyUrl}';
+  var PRIMARY     = '${safePrimaryColor}';
+  var TEXT_COLOR  = '${safeTextColor}';
+  var POSITION    = '${safePosition}';
+  var DETAIL_URL  = '${safePolicyUrl}';
 
   // ── Mevcut rıza kontrolü ──────────────────────────────────────────────
   var stored = null;
@@ -66,7 +93,7 @@ export function generateSnippet(data: WizardData): string {
 
   banner.innerHTML = [
     '<div style="flex:1;min-width:200px;">',
-    '  <strong style="display:block;margin-bottom:4px;">${firmaBilgileri.companyName} — Çerez Bildirimi</strong>',
+    '  <strong style="display:block;margin-bottom:4px;">${safeCompanyName} — Çerez Bildirimi</strong>',
     '  Size daha iyi hizmet sunabilmek için çerezler kullanıyoruz. ${nonEssentialCookies.length > 0 ? "Analitik ve pazarlama çerezleri için onayınızı istiyoruz." : "Yalnızca zorunlu çerezler kullanılmaktadır."}',
     '</div>',
     '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">',
@@ -77,7 +104,7 @@ export function generateSnippet(data: WizardData): string {
     '    padding:8px 18px;border-radius:6px;',
     '    cursor:pointer;font-size:13px;font-weight:600;',
     '    transition:background 0.2s;">',
-    '    ${bannerTasarimi.buttonText}',
+    '    ${safeButtonText}',
     '  </button>',
     ${
       nonEssentialCookies.length > 0
@@ -88,7 +115,7 @@ export function generateSnippet(data: WizardData): string {
     '    padding:8px 18px;border-radius:6px;',
     '    cursor:pointer;font-size:13px;',
     '    transition:background 0.2s;">',
-    '    ${bannerTasarimi.rejectText}',
+    '    ${safeRejectText}',
     '  </button>',`
         : ""
     }
@@ -96,7 +123,7 @@ export function generateSnippet(data: WizardData): string {
     '    color:' + TEXT_COLOR + ';',
     '    opacity:0.8;font-size:12px;',
     '    text-decoration:underline;cursor:pointer;">',
-    '    ${bannerTasarimi.detailText}',
+    '    ${safeDetailText}',
     '  </a>',
     '</div>',
   ].join('\\n');
@@ -144,7 +171,7 @@ export function generateSnippet(data: WizardData): string {
       localStorage.setItem(CONSENT_KEY, JSON.stringify({
         accepted: accepted,
         ts: Date.now(),
-        domain: '${domain}'
+        domain: '${safeDomain}'
       }));
     } catch(e) {}
   }
@@ -187,28 +214,36 @@ function generateLoaders(cookies: WizardData["selectedCookies"]): string {
   for (const cookie of cookies) {
     if (cookie.required) continue
 
+    // trackingId'yi JS string'e güvenli şekilde göm
+    const tid = esc(cookie.trackingId || "")
+
     switch (cookie.scriptLoader) {
-      case "ga":
+      case "ga": {
+        const gaId = tid || "GA_MEASUREMENT_ID"
         lines.push(
           `    // Google Analytics`,
-          `    loadScript('https://www.googletagmanager.com/gtag/js?id=${cookie.trackingId || "GA_MEASUREMENT_ID"}');`,
+          `    loadScript('https://www.googletagmanager.com/gtag/js?id=${gaId}');`,
           `    window.dataLayer = window.dataLayer || [];`,
           `    function gtag(){dataLayer.push(arguments);}`,
           `    gtag('js', new Date());`,
-          `    gtag('config', '${cookie.trackingId || "GA_MEASUREMENT_ID"}');`
+          `    gtag('config', '${gaId}');`
         )
         break
-      case "gads":
+      }
+      case "gads": {
+        const adsId = tid || "AW-CONVERSION_ID"
         lines.push(
           `    // Google Ads`,
-          `    loadScript('https://www.googletagmanager.com/gtag/js?id=${cookie.trackingId || "AW-CONVERSION_ID"}');`,
+          `    loadScript('https://www.googletagmanager.com/gtag/js?id=${adsId}');`,
           `    window.dataLayer = window.dataLayer || [];`,
           `    function gtag(){dataLayer.push(arguments);}`,
           `    gtag('js', new Date());`,
-          `    gtag('config', '${cookie.trackingId || "AW-CONVERSION_ID"}');`
+          `    gtag('config', '${adsId}');`
         )
         break
-      case "fbq":
+      }
+      case "fbq": {
+        const pixelId = tid || "PIXEL_ID"
         lines.push(
           `    // Facebook Pixel`,
           `    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?`,
@@ -218,21 +253,34 @@ function generateLoaders(cookies: WizardData["selectedCookies"]): string {
           `      t.src=v;s=b.getElementsByTagName(e)[0];`,
           `      s.parentNode.insertBefore(t,s)}(window, document,'script',`,
           `      'https://connect.facebook.net/en_US/fbevents.js');`,
-          `    fbq('init', '${cookie.trackingId || "PIXEL_ID"}');`,
+          `    fbq('init', '${pixelId}');`,
           `    fbq('track', 'PageView');`
         )
         break
-      case "hotjar":
+      }
+      case "hotjar": {
+        // Hotjar ID sayısal olmalı — güvenli bir default ver
+        const hjid = tid || "HOTJAR_ID"
         lines.push(
           `    // Hotjar`,
           `    (function(h,o,t,j,a,r){`,
           `      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};`,
-          `      h._hjSettings={hjid:${cookie.trackingId || "HOTJAR_ID"},hjsv:6};`,
+          `      h._hjSettings={hjid:${hjid},hjsv:6};`,
           `      a=o.getElementsByTagName('head')[0];`,
           `      r=o.createElement('script');r.async=1;`,
           `      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;`,
           `      a.appendChild(r);`,
           `    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');`
+        )
+        break
+      }
+      case "youtube":
+        // YouTube embed çerezleri iframe yüklenmeden önce gelmez.
+        // Gerçek bloklamak için iframe src'yi consent sonrası set etmek gerekir;
+        // bu snippet bu davranışı belgelemekle yetinir.
+        lines.push(
+          `    // YouTube — iframe'lerinizde 'src' yerine 'data-src' kullanın`,
+          `    // ve consent sonrası document.querySelectorAll('[data-src]').forEach(function(el){el.src=el.dataset.src;}); çağrısı yapın.`
         )
         break
     }

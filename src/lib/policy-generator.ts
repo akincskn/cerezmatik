@@ -1,6 +1,15 @@
 import type { WizardData } from "@/types"
 import { CATEGORY_LABELS } from "@/lib/cookie-presets"
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}
+
 /**
  * KVKK uyumlu Türkçe çerez politikası HTML'i üretir.
  */
@@ -12,7 +21,11 @@ export function generateCookiePolicy(data: WizardData): string {
     year: "numeric",
   })
 
-  const domain = normalizeDomain(firmaBilgileri.domain)
+  const domain = escapeHtml(normalizeDomain(firmaBilgileri.domain))
+  const companyName = escapeHtml(firmaBilgileri.companyName)
+  const dataController = escapeHtml(firmaBilgileri.dataController)
+  const email = escapeHtml(firmaBilgileri.email)
+  const mersisNo = firmaBilgileri.mersisNo ? escapeHtml(firmaBilgileri.mersisNo) : ""
   const cookieRows = selectedCookies.map((cookie) => buildCookieRow(cookie)).join("")
 
   return `<!DOCTYPE html>
@@ -20,7 +33,7 @@ export function generateCookiePolicy(data: WizardData): string {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Çerez Politikası — ${firmaBilgileri.companyName}</title>
+  <title>Çerez Politikası — ${companyName}</title>
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       color:#1f2937;line-height:1.7;max-width:800px;margin:0 auto;padding:40px 20px;}
@@ -45,9 +58,9 @@ export function generateCookiePolicy(data: WizardData): string {
 
   <h2>1. Giriş</h2>
   <p>
-    <strong>${firmaBilgileri.companyName}</strong> olarak, <strong>${domain}</strong> adresli
+    <strong>${companyName}</strong> olarak, <strong>${domain}</strong> adresli
     web sitemizi ziyaret ettiğinizde çerezler (cookies) kullandığımızı ve bu çerezlerin
-    işlenmesinde <strong>${firmaBilgileri.dataController}</strong> veri sorumlusu sıfatıyla
+    işlenmesinde <strong>${dataController}</strong> veri sorumlusu sıfatıyla
     hareket ettiğini bildiririz. Bu politika, Kişisel Verilerin Korunması Kanunu (KVKK)
     kapsamındaki aydınlatma yükümlülüğümüzü yerine getirmek amacıyla hazırlanmıştır.
   </p>
@@ -104,9 +117,9 @@ export function generateCookiePolicy(data: WizardData): string {
 
   <h2>7. İletişim</h2>
   <p>
-    Çerez politikamıza ilişkin sorularınız için <a href="mailto:${firmaBilgileri.email}">${firmaBilgileri.email}</a>
+    Çerez politikamıza ilişkin sorularınız için <a href="mailto:${email}">${email}</a>
     adresine ulaşabilirsiniz.
-    ${firmaBilgileri.mersisNo ? `MERSİS No: ${firmaBilgileri.mersisNo}` : ""}
+    ${mersisNo ? `MERSİS No: ${mersisNo}` : ""}
   </p>
 
   <div class="disclaimer">
@@ -129,10 +142,10 @@ function buildCookieRow(cookie: WizardData["selectedCookies"][number]): string {
   const badgeClass = cookie.category
 
   return `<tr>
-    <td><strong>${cookie.name}</strong></td>
-    <td><span class="badge ${badgeClass}">${categoryLabel}</span></td>
-    <td>${cookie.description}</td>
-    <td>${cookie.duration}</td>
+    <td><strong>${escapeHtml(cookie.name)}</strong></td>
+    <td><span class="badge ${badgeClass}">${escapeHtml(categoryLabel)}</span></td>
+    <td>${escapeHtml(cookie.description)}</td>
+    <td>${escapeHtml(cookie.duration)}</td>
   </tr>`
 }
 

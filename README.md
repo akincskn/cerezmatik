@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Çerezmatik
 
-## Getting Started
+3 dakikada KVKK uyumlu cookie banner, çerez politikası ve aydınlatma metni oluşturucu.
 
-First, run the development server:
+## Özellikler
+
+- 4 adımlı wizard: firma bilgileri → çerez seçimi → banner tasarımı → çıktılar
+- Vanilla JS snippet (bağımlılıksız, ~4 KB)
+- Otomatik Türkçe çerez politikası HTML
+- KVKK Madde 10 uyumlu aydınlatma metni
+- Google Analytics, Google Ads, Facebook Pixel, Hotjar desteği
+- Hesapsız kullanım + kayıt ile panel yönetimi
+- Public hosting: `/p/[slug]` çerez politikası sayfası
+
+## Stack
+
+- Next.js 14 (App Router)
+- Prisma v5 + Neon PostgreSQL
+- NextAuth v4 (JWT, Credentials)
+- Zustand v5, shadcn/ui, Tailwind CSS v3
+- Zod v4
+
+## Kurulum
 
 ```bash
+# Bağımlılıkları yükle
+npm install
+
+# .env dosyasını oluştur
+cp .env.example .env.local
+# .env.local içindeki değerleri doldur
+
+# Veritabanı migration
+npx prisma migrate dev --name init
+
+# Geliştirme sunucusunu başlat
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deployment (Vercel)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. Repo'yu Vercel'e bağla
+2. Environment variables ekle (`.env.example`'a bak):
+   - `DATABASE_URL` — Neon pooled connection
+   - `DIRECT_URL` — Neon direct connection
+   - `NEXTAUTH_URL` — Production URL (örn: `https://cerezmatik.com`)
+   - `NEXTAUTH_SECRET` — `openssl rand -base64 32` ile üret
+3. Build command: `npx prisma migrate deploy && next build`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Lisans
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

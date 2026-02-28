@@ -16,7 +16,10 @@ import { Shield, RefreshCw, AlertCircle } from "lucide-react"
 export default function GirisPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/panel"
+  // Open redirect koruması: yalnızca kendi sitemizdeki göreli yollara izin ver
+  const rawCallback = searchParams.get("callbackUrl") ?? "/panel"
+  const callbackUrl =
+    rawCallback.startsWith("/") && !rawCallback.startsWith("//") ? rawCallback : "/panel"
   const [serverError, setServerError] = useState<string | null>(null)
 
   const {

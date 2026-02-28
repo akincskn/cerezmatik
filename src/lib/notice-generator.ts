@@ -1,5 +1,14 @@
 import type { WizardData } from "@/types"
 
+function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;")
+}
+
 /**
  * KVKK Madde 10 kapsamında Türkçe aydınlatma metni HTML'i üretir.
  */
@@ -12,14 +21,18 @@ export function generatePrivacyNotice(data: WizardData): string {
   })
 
   const processingPurposes = buildProcessingPurposes(selectedCookies)
-  const domain = normalizeDomain(firmaBilgileri.domain)
+  const domain = escapeHtml(normalizeDomain(firmaBilgileri.domain))
+  const companyName = escapeHtml(firmaBilgileri.companyName)
+  const dataController = escapeHtml(firmaBilgileri.dataController)
+  const email = escapeHtml(firmaBilgileri.email)
+  const mersisNo = firmaBilgileri.mersisNo ? escapeHtml(firmaBilgileri.mersisNo) : ""
 
   return `<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>KVKK Aydınlatma Metni — ${firmaBilgileri.companyName}</title>
+  <title>KVKK Aydınlatma Metni — ${companyName}</title>
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       color:#1f2937;line-height:1.7;max-width:800px;margin:0 auto;padding:40px 20px;}
@@ -49,12 +62,12 @@ export function generatePrivacyNotice(data: WizardData): string {
 
   <h2>1. Veri Sorumlusu</h2>
   <p>
-    Kişisel verileriniz; <strong>${firmaBilgileri.companyName}</strong>
-    ${firmaBilgileri.mersisNo ? `(MERSİS No: ${firmaBilgileri.mersisNo})` : ""}
+    Kişisel verileriniz; <strong>${companyName}</strong>
+    ${mersisNo ? `(MERSİS No: ${mersisNo})` : ""}
     tarafından, KVKK kapsamında <strong>veri sorumlusu</strong> sıfatıyla işlenmektedir.
-    Veri sorumlusu temsilcisi: <strong>${firmaBilgileri.dataController}</strong>.
+    Veri sorumlusu temsilcisi: <strong>${dataController}</strong>.
   </p>
-  <p>İletişim: <a href="mailto:${firmaBilgileri.email}">${firmaBilgileri.email}</a></p>
+  <p>İletişim: <a href="mailto:${email}">${email}</a></p>
 
   <h2>2. İşlenen Kişisel Veriler</h2>
   <p>
@@ -117,7 +130,7 @@ export function generatePrivacyNotice(data: WizardData): string {
   </ul>
   <p>
     Bu haklarınızı kullanmak için
-    <a href="mailto:${firmaBilgileri.email}">${firmaBilgileri.email}</a>
+    <a href="mailto:${email}">${email}</a>
     adresine yazılı veya elektronik ortamda başvurabilirsiniz. Başvurularınız en geç
     30 gün içinde sonuçlandırılacaktır.
   </p>
